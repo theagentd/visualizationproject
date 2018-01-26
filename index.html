@@ -3,9 +3,9 @@
 	<body>
 		<style>
 
-		.chart rect {
+		/*.chart rect {
 		  fill: steelblue;
-		}
+		}*/
 
 		.chart text {
 		  font-family: sans-serif;
@@ -14,72 +14,98 @@
 		
 		<script src="d3.js"></script>
 		<svg class="chart"></svg>
+		<button onclick="myclick();">Click me</button>
 		<script>
 			
-
-			d3.csv("introdata.csv", function(data) {
-				var students = [];
+			currentData = 0;
+			dataTypes = ["Math skill score", "Artistic skill score", "Programming skill score", "Support/leadership skill score"];
+			
+			d3.csv("visdata.csv", function(data) {
+				var rawData = [];
 				data.forEach(function(d) {
 					var student = [];
 					for (var i in d){
 						student.push(d[i]);
 					}
-					students.push(student);
+					rawData.push(student);
 				});
 				
-				var data = [];
-				for(var i = 0; i < students.length; i++){
-					var s = students[i];
-					var total = 0;
-					for(var j = 5; j < s.length; j++){
-						total += Math.exp(+s[j]);
-					}
-					total = Math.round(Math.log(total / s.length) * 10) / 10;
-					console.log(total);
-					data.push(total);
+				myData = [];
+				order = [];
+				for(var i = 0; i < rawData.length; i++){
+					var s = rawData[i];
+					
+					/*
+					Stats:
+					 - Math: infovis, Math, stats
+					 - Artistic: Artist, graphics*0.5
+					 - Programming: infovis, programming, graphics, HCI
+					 - Support: infovis, comp usage, exp eval, comm, collab, rep
+					*/
+					var math = Math.round((+s[6] + +s[7] + +s[8]) / 3.0 * 10) / 10;
+					var arti = Math.round((+s[9] + +s[12]*0.5) / 1.5 * 10) / 10;
+					var prog = Math.round((+s[6] + +s[11] + +s[12] + +s[13]) / 4.0 * 10) / 10;
+					var supp = Math.round((+s[6] + +s[10] + +s[14] + +s[15] + +s[16] + +s[17]) / 6.0 * 10) / 10;
+					
+					var result = [math, arti, prog, supp];
+					myData.push(result);
+					
+					console.log(result);
+					
+					order.push(i);
 				}
-				data.sort(function(a,b) { return (+a) - (+b); });
-				console.log(data);
+				order.sort(function(a,b) { return (+myData[a][currentData]) - (+myData[b][currentData]); });
+				console.log(myData);
 				
-				var width = 1920;
-				var height = 1080;
+				var width = 1600;
+				var height = 900;
 				
-				var margin = 80;
-				var graphWidth = width - margin;
-				var graphHeight = height - margin;
-				var barWidth = graphWidth * 1.0 / data.length;
+				margin = 80;
+				graphWidth = width - margin;
+				graphHeight = height - margin;
+				barWidth = graphWidth * 1.0 / myData.length;
 
-				var x = d3.scaleLinear()
-					.domain([0, d3.max(data) + 10])
+				x = d3.scaleLinear()
+					.domain([0, d3.max(myData, function(d) { return d3.max(d);}) + 2])
 					.range([graphHeight, 0]);
 					
-				var y = d3.scaleLinear()
-					.domain([0, data.length])
+				y = d3.scaleLinear()
+					.domain([0, myData.length])
 					.range([0, graphWidth]);
 					
 					
 
-				var chart = d3.select(".chart")
+				chart = d3.select(".chart")
 					.attr("width", width)
 					.attr("height", height);
 
-				var bar = chart.selectAll("g")
-					.data(data)
+				myChart = chart.selectAll("g")
+					.data(myData)
 				  .enter().append("g")
-					.attr("transform", function(d, i) { return "translate(" + (i * barWidth + margin) + "," + x(d) + ")"; });
-
-				bar.append("rect")
+					.attr("transform", function(d, i) { return "translate(" + (order.indexOf(i) * barWidth + margin) + "," + x(d[currentData]) + ")"; });
+					
+				var colors = d3.scaleOrdinal(d3.schemeCategory10);
+				bars = myChart.append("rect")
 					.attr("x", 2)
+					.attr("fill", function(d,i){return colors(i);})
 					.attr("width", barWidth - 2)
-					.attr("height", function(d) { return graphHeight - x(d); });
+					.attr("height", function(d, i) { return graphHeight - x(d[currentData]); });
 
-				bar.append("text")
+				texts = myChart.append("text")
 					.attr("text-anchor", "middle")
-					.attr("font-size", "10px")
+					.attr("font-size", "8px")
 					.attr("fill", "white")
 					.attr("x", 0.5 * barWidth + 1)
-					.attr("y", function(d) { return 10; })
-					.text(function(d) { return d; });
+					.attr("y", 10)
+					.text(function(d, i) { return d[currentData]; });
+
+				myChart.append("text")
+					.attr("text-anchor", "middle")
+					.attr("font-size", "8px")
+					.attr("fill", "white")
+					.attr("x", 0.5 * barWidth + 1)
+					.attr("y", 30)
+					.text(function(d, i) { return (i+1);});
 					
 				chart.append("g")
 					.attr("transform", "translate(" + margin + ", 0)")
@@ -93,13 +119,13 @@
 					
 					
 					
-				chart.append("g")
+				leftLabel = chart.append("g")
 					.attr("transform", "translate(" + (margin - 10)/2 + ", " + graphHeight/2 + ") rotate(90) ")
 					.append("text")
 						.attr("text-anchor", "middle")
 						.attr("alignment-baseline", "middle")
 						.attr("font-size", "30px")
-						.text("Student self confidence score");
+						.text(dataTypes[currentData]);
 						
 				chart.append("g")
 					.attr("transform", "translate(" + (margin + graphWidth / 2) + ", " + (graphHeight + 10 + (margin - 10)/2) + ")")
@@ -112,7 +138,25 @@
 				
 				
 			});
-			
+		
+			function myclick(){
+				currentData = (currentData + 1) % 4;
+				order.sort(function(a,b) { return (+myData[a][currentData]) - (+myData[b][currentData]); });
+				console.log(currentData);
+				
+				var tranisitonTime = 2500;
+				myChart.transition().duration(tranisitonTime)
+					.attr("transform", function(d, i) { return "translate(" + (order.indexOf(i) * barWidth + margin) + "," + x(d[currentData]) + ")"; });
+				
+				bars.transition().duration(tranisitonTime)
+					.attr("height", function(d, i) { return graphHeight - x(d[currentData]); });
+				texts.transition().duration(tranisitonTime)
+					.text(function(d, i) { return d[currentData]; });
+				leftLabel.transition().duration(tranisitonTime)
+					.text(dataTypes[currentData]);
+				
+				
+			}
 			
 
 		</script>
