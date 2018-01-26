@@ -1,0 +1,120 @@
+<html>
+
+	<body>
+		<style>
+
+		.chart rect {
+		  fill: steelblue;
+		}
+
+		.chart text {
+		  font-family: sans-serif;
+		}
+		</style>
+		
+		<script src="d3.js"></script>
+		<svg class="chart"></svg>
+		<script>
+			
+
+			d3.csv("introdata.csv", function(data) {
+				var students = [];
+				data.forEach(function(d) {
+					var student = [];
+					for (var i in d){
+						student.push(d[i]);
+					}
+					students.push(student);
+				});
+				
+				var data = [];
+				for(var i = 0; i < students.length; i++){
+					var s = students[i];
+					var total = 0;
+					for(var j = 5; j < s.length; j++){
+						total += Math.exp(+s[j]);
+					}
+					total = Math.round(Math.log(total / s.length) * 10) / 10;
+					console.log(total);
+					data.push(total);
+				}
+				data.sort(function(a,b) { return (+a) - (+b); });
+				console.log(data);
+				
+				var width = 1920;
+				var height = 1080;
+				
+				var margin = 80;
+				var graphWidth = width - margin;
+				var graphHeight = height - margin;
+				var barWidth = graphWidth * 1.0 / data.length;
+
+				var x = d3.scaleLinear()
+					.domain([0, d3.max(data) + 10])
+					.range([graphHeight, 0]);
+					
+				var y = d3.scaleLinear()
+					.domain([0, data.length])
+					.range([0, graphWidth]);
+					
+					
+
+				var chart = d3.select(".chart")
+					.attr("width", width)
+					.attr("height", height);
+
+				var bar = chart.selectAll("g")
+					.data(data)
+				  .enter().append("g")
+					.attr("transform", function(d, i) { return "translate(" + (i * barWidth + margin) + "," + x(d) + ")"; });
+
+				bar.append("rect")
+					.attr("x", 2)
+					.attr("width", barWidth - 2)
+					.attr("height", function(d) { return graphHeight - x(d); });
+
+				bar.append("text")
+					.attr("text-anchor", "middle")
+					.attr("font-size", "10px")
+					.attr("fill", "white")
+					.attr("x", 0.5 * barWidth + 1)
+					.attr("y", function(d) { return 10; })
+					.text(function(d) { return d; });
+					
+				chart.append("g")
+					.attr("transform", "translate(" + margin + ", 0)")
+					.call(d3.axisLeft(x)
+						.ticks(10)
+					);
+				chart.append("g")
+					.attr("transform", "translate(" + margin + ", " + graphHeight + ")")
+					.call(d3.axisBottom(y)
+						.ticks(0));
+					
+					
+					
+				chart.append("g")
+					.attr("transform", "translate(" + (margin - 10)/2 + ", " + graphHeight/2 + ") rotate(90) ")
+					.append("text")
+						.attr("text-anchor", "middle")
+						.attr("alignment-baseline", "middle")
+						.attr("font-size", "30px")
+						.text("Student self confidence score");
+						
+				chart.append("g")
+					.attr("transform", "translate(" + (margin + graphWidth / 2) + ", " + (graphHeight + 10 + (margin - 10)/2) + ")")
+					.append("text")
+						.attr("text-anchor", "middle")
+						.attr("alignment-baseline", "middle")
+						.attr("font-size", "30px")
+						.text("Students");
+					
+				
+				
+			});
+			
+			
+
+		</script>
+	</body>
+</html>
