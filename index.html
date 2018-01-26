@@ -2,19 +2,14 @@
 
 	<body>
 		<style>
-
-		/*.chart rect {
-		  fill: steelblue;
-		}*/
-
 		.chart text {
 		  font-family: sans-serif;
 		}
 		</style>
 		
+		<button onclick="myclick();">Click me</button>
 		<script src="d3.js"></script>
 		<svg class="chart"></svg>
-		<button onclick="myclick();">Click me</button>
 		<script>
 			
 			currentData = 0;
@@ -57,8 +52,8 @@
 				order.sort(function(a,b) { return (+myData[a][currentData]) - (+myData[b][currentData]); });
 				console.log(myData);
 				
-				var width = 1600;
-				var height = 900;
+				var width = 1280;
+				var height = 720;
 				
 				margin = 80;
 				graphWidth = width - margin;
